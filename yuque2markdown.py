@@ -97,6 +97,7 @@ def extract_repos(repo_dir, output, toc, download_image):
             
             html = handle_highlight(html)
             html = convert_alerts_to_callout(html)
+            html = convert_code_blocks(html)
             
             output_path = os.path.join(output_dir_path, sanitized_title + ".md")
             f = open(output_path, "w", encoding="utf-8")
@@ -104,6 +105,18 @@ def extract_repos(repo_dir, output, toc, download_image):
 
         last_sanitized_title = sanitized_title
         last_level = current_level
+
+def convert_code_blocks(html: str) -> str:
+    bs = BeautifulSoup(html, "html.parser")
+
+    for pre in bs.find_all("pre", class_="ne-codeblock"):
+        lang = pre.get("data-language", "").strip()
+        code_text = "".join(pre.stripped_strings)
+        md_block = f"```{lang}\n{code_text}\n```"
+
+        pre.replace_with(bs.new_string("\n" + md_block + "\n\n"))
+
+    return str(bs)
 
 def convert_alerts_to_callout(html_content: str) -> str:
     """
