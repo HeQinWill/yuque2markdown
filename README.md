@@ -52,7 +52,7 @@ options:
 
 ## Contributors
 
-<a href="https://github.com/alswl/yuque2markdown/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=alswl/yuque2markdown" />
+<a href="https://github.com/HeQinWill/yuque2markdown/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=HeQinWill/yuque2markdown" />
 </a>
 
