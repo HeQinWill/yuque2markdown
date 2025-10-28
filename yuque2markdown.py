@@ -94,7 +94,9 @@ def extract_repos(repo_dir, output, toc, download_image):
                 html = download_images_and_patch_html(
                     output_dir_path, sanitized_title, html
                 )
-
+            
+            html = handle_highlight(html)
+            
             output_path = os.path.join(output_dir_path, sanitized_title + ".md")
             f = open(output_path, "w", encoding="utf-8")
             f.write(pretty_md(md(html, heading_style=DEFAULT_HEADING_STYLE)))
@@ -102,6 +104,13 @@ def extract_repos(repo_dir, output, toc, download_image):
         last_sanitized_title = sanitized_title
         last_level = current_level
 
+def handle_highlight(html):
+    bs = BeautifulSoup(html, "html.parser")
+    for span in bs.find_all("span", style=lambda value: 'background-color: #FBDE28' in value if value else False):
+        span.insert_before("==")
+        span.insert_after("==")
+        span.unwrap()
+    return str(bs)
 
 def download_images_and_patch_html(output_dir_path, sanitized_title, html):
     bs = BeautifulSoup(html, "html.parser")
