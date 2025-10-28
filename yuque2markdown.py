@@ -26,6 +26,7 @@ content_type_to_extension = {
     "image/jpeg": ".jpg",
     "image/svg+xml": ".svg",
     "image/png": ".png",
+    "image/webp": ".webp",
 }
 
 
