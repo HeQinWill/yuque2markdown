@@ -96,6 +96,7 @@ def extract_repos(repo_dir, output, toc, download_image):
                 )
             
             html = handle_highlight(html)
+            html = convert_alerts_to_callout(html)
             
             output_path = os.path.join(output_dir_path, sanitized_title + ".md")
             f = open(output_path, "w", encoding="utf-8")
@@ -103,6 +104,53 @@ def extract_repos(repo_dir, output, toc, download_image):
 
         last_sanitized_title = sanitized_title
         last_level = current_level
+
+def convert_alerts_to_callout(html_content: str) -> str:
+    """
+    将 ne-alert 转成 Obsidian Callout，但保留块级 HTML 结构，
+    确保 markdownify 正确转换成 Markdown 引用块，避免粘连。
+    """
+    CALLOUT_MAP = {
+        'info': 'INFO',
+        'tips': 'TIP',
+        'success': 'SUCCESS',
+        'warning': 'WARNING',
+        'danger': 'DANGER',
+        'color1': 'NOTE',
+        'color2': 'SUCCESS',
+        'color3': 'WARNING',
+        'color4': 'DANGER',
+        'color5': 'ABSTRACT',
+    }
+
+    bs = BeautifulSoup(html_content, "html.parser")
+
+    for div in bs.find_all("div", class_="ne-alert"):
+        data_type = div.get("data-type")
+        callout_type = CALLOUT_MAP.get(data_type, "NOTE")
+
+        # 提取文本
+        lines = []
+        for p in div.find_all("p", recursive=False):
+            text = "".join(p.stripped_strings)
+            if text:
+                lines.append(text)
+
+        # 包装成 <blockquote> 结构，markdownify 会自动转为 `>`
+        block = bs.new_tag("blockquote")
+        block.append(bs.new_string(f"[!{callout_type}]"))
+        block.append(bs.new_tag("br"))
+        for line in lines:
+            block.append(bs.new_string(line))
+            block.append(bs.new_tag("br"))
+
+        # 确保与周围内容分隔
+        div.insert_before("\n")
+        div.replace_with(block)
+        block.insert_after("\n")
+
+    return str(bs)
+
 
 def handle_highlight(html):
     bs = BeautifulSoup(html, "html.parser")
