@@ -106,7 +106,7 @@ def extract_repos(repo_dir, output, toc, download_image):
 
 def handle_highlight(html):
     bs = BeautifulSoup(html, "html.parser")
-    for span in bs.find_all("span", style=lambda value: 'background-color: #FBDE28' in value if value else False):
+    for span in bs.find_all("span", style=lambda value: 'background-color: #' in value if value else False):
         span.insert_before("==")
         span.insert_after("==")
         span.unwrap()
