@@ -12,6 +12,7 @@ from requests import get
 
 import yaml
 import tempfile
+import re
 
 
 TYPE_TITLE = "TITLE"
@@ -98,26 +99,44 @@ def extract_repos(repo_dir, output, toc, download_image):
             
             html = handle_highlight(html)
             html = convert_alerts_to_callout(html)
-            html = convert_code_blocks(html)
             
             output_path = os.path.join(output_dir_path, sanitized_title + ".md")
             f = open(output_path, "w", encoding="utf-8")
-            f.write(pretty_md(md(html, heading_style=DEFAULT_HEADING_STYLE)))
+            md_out = md(html, heading_style=DEFAULT_HEADING_STYLE,
+                     code_block_style='fenced', 
+                     code_language_callback=code_lang_cb)
+            f.write(pretty_md(md_out))
 
         last_sanitized_title = sanitized_title
         last_level = current_level
 
-def convert_code_blocks(html: str) -> str:
-    bs = BeautifulSoup(html, "html.parser")
+def code_lang_cb(el):
+    """
+    直接使用markdownify的code_language_callback来动态识别语言
+    el 是一个 BeautifulSoup 的 <pre> 元素（注意：回调收到的是 <pre>，不是 <code>）
+    返回语言字符串或 None
+    优先级 data-language / data-lang > class中的 language-xxx|lang-xxx
+    """
+    # 1) data-language / data-lang
+    for k in ('data-language', 'data-lang'):
+        if el.has_attr(k) and el.get(k):
+            return el.get(k).strip()
 
-    for pre in bs.find_all("pre", class_="ne-codeblock"):
-        lang = pre.get("data-language", "").strip()
-        code_text = "".join(pre.stripped_strings)
-        md_block = f"```{lang}\n{code_text}\n```"
+    # 2) class 里提取 language-xxx|lang-xxx
+    classes = ' '.join(el.get('class', [])).strip()
+    m = re.search(r'(?:language|lang)-([A-Za-z0-9_+-]+)', classes)
+    if m:
+        return m.group(1)
 
-        pre.replace_with(bs.new_string("\n" + md_block + "\n\n"))
+    # 3) 万一有些页面把语言挂在内层 <code> 上，尝试抓一下
+    code = el.find('code')
+    if code:
+        classes = ' '.join(code.get('class', [])).strip()
+        m = re.search(r'(?:language|lang)-([A-Za-z0-9_+-]+)', classes)
+        if m:
+            return m.group(1)
 
-    return str(bs)
+    return None  # 返回 None 则不加语言标签
 
 def convert_alerts_to_callout(html_content: str) -> str:
     """
