@@ -91,6 +91,9 @@ def extract_repos(repo_dir, output, toc, download_image):
             raw_file = open(raw_path, "r", encoding="utf-8")
             doc_str = json.loads(raw_file.read())
             html = doc_str["doc"]["body"] or doc_str["doc"]["body_asl"]
+            draft = doc_str["doc"]["body_draft"] 
+            if html != draft:   
+                print("请检查草稿内容是否发布:"+sanitized_title)
 
             if download_image:
                 html = download_images_and_patch_html(
