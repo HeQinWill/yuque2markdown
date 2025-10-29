@@ -94,6 +94,9 @@ def extract_repos(repo_dir, output, toc, download_image):
             draft = doc_str["doc"]["body_draft"] 
             if html != draft:   
                 print("请检查草稿内容是否发布:"+sanitized_title)
+            if html.startswith('{"format":"lakesheet"'):
+                print("请手动处理Lakesheet表格:"+sanitized_title, url, sep='\n')
+                continue
 
             if download_image:
                 html = download_images_and_patch_html(
@@ -284,6 +287,6 @@ def extract_tar(tar_file, target_dir):
         tar.extract(name, target_dir)
     tar.close()
 
-
+#%%
 if __name__ == "__main__":
     main()
