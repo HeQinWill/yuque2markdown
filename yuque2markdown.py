@@ -105,6 +105,7 @@ def extract_repos(repo_dir, output, toc, download_image):
             
             html = handle_highlight(html)
             html = convert_alerts_to_callout(html)
+            html = handle_checkbox(html)
             
             output_path = os.path.join(output_dir_path, sanitized_title + ".md")
             f = open(output_path, "w", encoding="utf-8")
@@ -143,6 +144,46 @@ def code_lang_cb(el):
             return m.group(1)
 
     return None  # 返回 None 则不加语言标签
+
+
+
+def handle_checkbox(html_content: str) -> str:
+    """
+    将 <input type="checkbox"> 转换为 Markdown 任务列表
+    - [x] 代表已选中，- [ ] 代表未选中
+    """
+    bs = BeautifulSoup(html_content, "html.parser")
+
+    # 查找所有的 <input type="checkbox">
+    for input_tag in bs.find_all("input", {"type": "checkbox"}):
+        # 查找其父元素，通常是 <li> 标签
+        parent_li = input_tag.find_parent("li")
+
+        # 检查是否选中
+        if input_tag.get("checked") is not None:
+            checkbox_mark = "- [x]"
+        else:
+            checkbox_mark = "- [ ]"
+
+        # 获取复选框后面的文本
+        text = ""
+        span_tag = parent_li.find("span", class_="ne-text")
+        if span_tag:
+            text = "".join(span_tag.stripped_strings)
+
+        # 将复选框和文本转换为 Markdown 任务列表
+        if text:
+            parent_li.insert_before(f"{checkbox_mark} {text}\n")
+
+        # 删除原本的 <input> 和 <span> 标签
+        input_tag.decompose()
+        if span_tag:
+            span_tag.decompose()
+
+    # 返回处理后的 HTML 内容
+    return str(bs)
+
+
 
 def convert_alerts_to_callout(html_content: str) -> str:
     """
